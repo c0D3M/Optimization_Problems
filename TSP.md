@@ -4,12 +4,12 @@ TSP:
 **Nearest Neighbour**  
 **Double Tree**  
 **Christofide Algorithm**  
-  **Aho-Hopcraft**
-  **Edmond's Blossom Algorithm**
-  **Hall's Theorem**
-  **Koinig Theorem**
-  **Berge's Theorem**
-  **Belief Propogation**
+  **Aho-Hopcraft**  
+  **Edmond's Blossom Algorithm**  
+  **Hall's Theorem**  
+  **Koinig Theorem**  
+  **Berge's Theorem**  
+  **Belief Propogation**  
 
 https://www.ibm.com/developerworks/community/blogs/jfp/entry/no_the_tsp_isn_t_np_complete?lang=en  
 http://graham-kendall.com/blog/2013/12/what-is-operations-research/  
