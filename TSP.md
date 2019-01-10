@@ -18,14 +18,22 @@ TSP is NP_Complete?: Is the given tour shorter than L
   **Edmond's Blossom Algorithm**  
   https://www-m9.ma.tum.de/graph-algorithms/matchings-blossom-algorithm/index_en.html  
   **Hall's Theorem**  
-  **Koinig Theorem**  
+  It gives a necessary and sufficient condition  for a matching to be possible.  
+  For u,v barpartite graph,  u >= v  
+  i.e. any node in u should have >= more choice then any node in v.  
+  See https://luckytoilet.wordpress.com/2013/12/21/halls-marriage-theorem-explained-intuitively/  
+  **Kőnig's theorem**  
+  Maximum matching is equal to minimum vertex cover.  
+  Minimum vertex covers =minimum vertex by which every edge is touched upon.  
+  https://www.youtube.com/watch?v=r_8eiVRNrNw
   **Berge's Theorem**  
+  Matching is maximum if and only if no augmenting path exists.  
   **Belief Propogation**  
+  **Hungarian Method**
+     Row-minima /column minima approach.  
 ##### TSP using Integer Programming  
    *Gomory Cut*  
        http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
 #### Tour Improvement methods  
 ##### Lin Kernighan  
 ##### Lin Kernighan Helsgaun  
-
-
