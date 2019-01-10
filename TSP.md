@@ -10,6 +10,12 @@ TSP:
   **Koinig Theorem**  
   **Berge's Theorem**  
   **Belief Propogation**  
+**TSP using Integer Programming**  
+   *Gomory Cut*  
+       http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
+**Tour Improvement methods**  
+**Lin Kernighan**  
+**Lin Kernighan Helsgaun**  
 
 https://www.ibm.com/developerworks/community/blogs/jfp/entry/no_the_tsp_isn_t_np_complete?lang=en  
 http://graham-kendall.com/blog/2013/12/what-is-operations-research/  
