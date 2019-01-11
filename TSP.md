@@ -25,11 +25,11 @@ TSP is NP_Complete?: Is the given tour shorter than L
   **Kőnig's theorem**  
   Maximum matching is equal to minimum vertex cover.  
   Minimum vertex covers =minimum vertex by which every edge is touched upon.  
-  https://www.youtube.com/watch?v=r_8eiVRNrNw
+  https://www.youtube.com/watch?v=r_8eiVRNrNw  
   **Berge's Theorem**  
   Matching is maximum if and only if no augmenting path exists.  
   **Belief Propogation**  
-  **Hungarian Method**
+  **Hungarian Method**  
      Row-minima /column minima approach.  
 ##### TSP using Integer Programming  
    *Gomory Cut*  
@@ -37,3 +37,6 @@ TSP is NP_Complete?: Is the given tour shorter than L
 #### Tour Improvement methods  
 ##### Lin Kernighan  
 ##### Lin Kernighan Helsgaun  
+
+**References**
+1. Summary of various way to solve TSP. https://www2.seas.gwu.edu/~simhaweb/champalg/tsp/tsp.html  
