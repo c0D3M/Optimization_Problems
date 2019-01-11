@@ -32,6 +32,7 @@ TSP is NP_Complete?: Is the given tour shorter than L
   **Hungarian Method**  
      Row-minima /column minima approach.  
 ##### TSP using Integer Programming  
+    http://opensourc.es/blog/mip-tsp  
    *Gomory Cut*  
        http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
 #### Tour Improvement methods  
