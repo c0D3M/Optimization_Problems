@@ -3,6 +3,9 @@
 
 using namespace std;
 float **adjMatrix;
+vector<int> Tour;
+float getDistance (int a, int b);
+float getDelta(int a, int b, int c, int d);
 class DisjointSet
 {
 	private:
@@ -140,9 +143,9 @@ int main(int argc, char* argv[])
 		MST.push_back(make_pair(i.first, i.second));
 		MST.push_back(make_pair(i.second, i.first));//Double the edges
 	}
-	
+	#ifdef DEBUG
 	cout <<"Minimum Spanning Tree cost ="<<cost<<endl;
-	
+	#endif
 	sort(MST.begin(), MST.end(), sortByu); //sort ascending
 	#ifdef DEBUG2
 	for (auto & i:MST)
@@ -184,7 +187,9 @@ int main(int argc, char* argv[])
 	//cout <<endl;
 	
 	cost *= (2.0);
+	#ifdef DEBUG
 	cout <<cost<<endl;;
+	#endif
 	//4. Cut short , remove double visited edges
 	bool used[n] = {false};
 	for (int i=0; i<tour.size(); ++i)
@@ -204,9 +209,144 @@ int main(int argc, char* argv[])
 			cost2 += adjMatrix[i][pre];
 		pre =i;
 		}
-	cout<<cost2+adjMatrix[0][pre]<<" "<<0<<endl;
+		
+	cost2 += adjMatrix[0][pre];	
+#ifdef DEBUG
+	cout<<cost2<<" "<<0<<endl;
 	for (auto & i:tour)
 		if(i!=-1)
 		cout << i <<" ";
-	cout<<endl;
+#endif
+	//TODO: find a neat way to get above tour.
+	
+	for (auto & i:tour)
+		if(i!=-1)
+			Tour.push_back(i);
+	// Tour improvement 2-opt
+	for (int i=0; i< n; i++)
+	{
+		// For each point generate (prev, i) & (i, next) 
+		int prev = (i -1 +n) % n;
+		int next = (i +1 +n) % n;
+		
+		int c = (prev +2)%n;
+		int d = (prev +3)%n;
+		// Generate next pair and try each of them one by one.
+		// For example  Tour =0, 4, 1, 2, 3
+		// i =0, prev =4 , next =1, 
+		// For (4,0)...loop generates (1,2) (2,3) (3, 4) 
+		// (0,1) ... (2,3) (3,4) (4,0)
+	    // (a, b) => (prev, i)
+		//cout <<" prev: "<<prev<<endl;
+		bool not_found =true;
+		while(not_found && (d!=prev))
+		{
+			//cout <<"Current: ("<<prev<<","<<i<<") Next City Pair: ("<< c<<","<<d<<")"<<endl;
+			float delta = getDelta(prev, i, c, d); // exchange (a,b) (c,d) edge and check if we can get shorter tour.
+			if(delta<0)
+			{
+				//Found a shorter tour
+				//cout << "shorter tour found"<<endl;
+				cost2 += delta;
+				//Reverse shorter tour
+				// b-c vs a-d 
+				/*
+				if b-c circuit length is smaller then "a->c-> Rev (c->b) -> b->d"
+				if a-d circuit is smaller then "Rev (a-d)-> d -> b -> c
+				*/
+				if(abs(i-c) < abs(prev-d))
+				{
+					int start = min(i, c);
+					int end = max(i, c);
+					int len  = end  - start+1;
+					for(int ii = 0; ii< len/2; ii++)
+						swap(Tour[start+ii], Tour[end-ii]);
+				}
+				else
+				{
+					int start = min(prev, d);
+					int end = max(prev, d);
+					int len  = end  - start+1;
+					for(int ii = 0; ii< len/2; ii++)
+						swap(Tour[start+ii], Tour[end-ii]);
+				}
+				not_found =false;
+				
+			}
+			else // Both replacement are longer exit
+			{
+				//cout <<"Current cost: "<<adjMatrix[prev][i]<<" "<< adjMatrix[c][d]<<endl;
+				//cout <<"Replacement: " << adjMatrix[prev][c] <<" "<< adjMatrix[i][d]<<endl;
+			}
+			c= d;
+			d = (d +1 +n) % n;
+		}
+		
+		// (a,b) => (i, next)
+		c = (i+2)%n;
+		d = (i+3)%n;
+		//cout <<" next: "<<next<<endl;
+		not_found = true;
+		while(not_found && (d!=i))
+		{
+			//cout <<"Current: ("<<i<<","<<next<<") Next City Pair: ("<< c<<","<<d<<")"<<endl;
+			float delta = getDelta(i, next, c, d); // exchange (a,b) (c,d) edge and check if we can get shorter tour.
+			if(delta<0)
+			{
+				//Found a shorter tour
+				//cout << "shorter tour found"<<endl;
+				cost2 += delta;
+				//Reverse shorter tour
+				// b-c vs a-d 
+				/*
+				if b-c circuit length is smaller then "a->c-> Rev (c->b) -> b->d"
+				if a-d circuit is smaller then "Rev (a-d)-> d -> b -> c
+				*/
+				if(abs(next-c) < abs(i-d))
+				{
+					int start = min(next, c);
+					int end = max(next, c);
+					int len  = end  - start+1;
+					for(int ii = 0; ii< len/2; ii++)
+						swap(Tour[start+ii], Tour[end-ii]);
+				}
+				else
+				{
+					int start = min(i, d);
+					int end = max(i, d);
+					int len  = end  - start+1;
+					for(int ii = 0; ii< len/2; ii++)
+						swap(Tour[start+ii], Tour[end-ii]);				}
+				not_found = false;
+			}
+			else // Both replacement are longer exit
+			{
+				//cout <<"Current cost: "<<adjMatrix[i][next]<<" "<< adjMatrix[c][d]<<endl;
+				//cout <<"Replacement: " << adjMatrix[i][c] <<" "<< adjMatrix[next][d]<<endl;
+			}
+			c= d;
+			d = (d +1 +n) % n;
+		}
+		
+	}
+	cout <<cost2<<" 0"<<endl;
+	for (auto & i:Tour)
+		cout << i<<" ";
+	cout <<endl;
+}
+// a, b, c, d  are indices in Tour array
+float getDistance (int a, int b)
+{
+	return adjMatrix[Tour[a]][Tour[b]];
+}
+// a, b, c, d  are indices in Tour array
+float getDelta(int a, int b, int c, int d)
+{
+	float ab =  getDistance(a, b);	
+	float ac =  getDistance(a, c);
+	float bd =  getDistance(b, d);
+	float cd =  getDistance(c, d);
+	if((ac > ab) && (bd > cd))
+		return 1;
+	return ac + bd - ab - cd;
 }
