@@ -4,6 +4,7 @@
 using namespace std;
 float **adjMatrix;
 vector<int> Tour;
+bool *isActive;
 float getDistance (int a, int b);
 float getDelta(int a, int b, int c, int d);
 class DisjointSet
@@ -99,9 +100,11 @@ int main(int argc, char* argv[])
 	int n;
 	cin >> n;
 	float points [n] [2]; // x & y co-ordinates
+	isActive = new bool[n];
 	adjMatrix = new float* [n];
 	for (int i=0; i<n; i++)
 	{
+		isActive[i] =1;
 		adjMatrix[i] = new float[n];
 		cin >> points[i][0] >> points[i][1];
 	}
@@ -223,7 +226,8 @@ int main(int argc, char* argv[])
 		if(i!=-1)
 			Tour.push_back(i);
 	// Tour improvement 2-opt
-	for (int i=0; i< n; i++)
+	int i=0, n_visited=0;
+	while (n_visited<n)
 	{
 		// For each point generate (prev, i) & (i, next) 
 		int prev = (i -1 +n) % n;
@@ -239,7 +243,7 @@ int main(int argc, char* argv[])
 	    // (a, b) => (prev, i)
 		//cout <<" prev: "<<prev<<endl;
 		bool not_found =true;
-		while(not_found && (d!=prev))
+		while(isActive[i] && not_found && (d!=prev))
 		{
 			//cout <<"Current: ("<<prev<<","<<i<<") Next City Pair: ("<< c<<","<<d<<")"<<endl;
 			float delta = getDelta(prev, i, c, d); // exchange (a,b) (c,d) edge and check if we can get shorter tour.
@@ -286,8 +290,8 @@ int main(int argc, char* argv[])
 		c = (i+2)%n;
 		d = (i+3)%n;
 		//cout <<" next: "<<next<<endl;
-		not_found = true;
-		while(not_found && (d!=i))
+		//not_found = true;
+		while(isActive[i] && not_found && (d!=i))
 		{
 			//cout <<"Current: ("<<i<<","<<next<<") Next City Pair: ("<< c<<","<<d<<")"<<endl;
 			float delta = getDelta(i, next, c, d); // exchange (a,b) (c,d) edge and check if we can get shorter tour.
@@ -327,6 +331,19 @@ int main(int argc, char* argv[])
 			c= d;
 			d = (d +1 +n) % n;
 		}
+		if(not_found)
+		{
+			//cout <<"No 2-opt found for "<<i<<endl;
+			if(isActive[i])
+			{
+				n_visited++;
+				isActive[i] = 0;
+			}
+			i = (i+1)%n;
+			
+		}
+		else
+			i = (i-1+n)%n;
 		
 	}
 	cout <<cost2<<" 0"<<endl;
