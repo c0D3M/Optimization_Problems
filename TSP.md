@@ -35,6 +35,8 @@ TSP is NP_Complete?: Is the given tour shorter than L
     http://opensourc.es/blog/mip-tsp  
    *Gomory Cut*  
        http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
+##### TSP using Guided Local Search/ Fast Local Search
+    http://csp.bracil.net/gls.html   
 #### Tour Improvement methods  
 ##### Lin Kernighan  
 ##### Lin Kernighan Helsgaun  
