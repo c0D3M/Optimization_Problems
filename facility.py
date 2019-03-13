@@ -1,7 +1,9 @@
 import sys
 from pyscipopt import Model, quicksum
+from pyscipopt import Model, Conshdlr, SCIP_RESULT, SCIP_PARAMEMPHASIS, SCIP_PARAMSETTING
 n = 0 # number of facility
 m = 0 # number of customer
+EPS = 1.e-6
 class Facility:
     __slots__ = ['cost', 'capacity', 'x', 'y']
     def __init__(self, cost, capacity, x, y):
@@ -49,6 +51,7 @@ def optimize():
 	global n, m, facility, customer
 	model = Model("Facility")
 	model.hideOutput()
+	model.setRealParam('limits/time', 3600)
 	# define decision variable
 	x = [] #bool flag is facility i is serving customer j
 	x = [[0 for x in range(m)] for y in range(n)]
@@ -77,14 +80,16 @@ def optimize():
 	
 	# define objective function
 	model.setObjective(quicksum(o[i]*facility[i].cost + quicksum(x[i][j]*d[i][j] for j in range(m)) for i in range(n)), "minimize");
+	model.setHeuristics(SCIP_PARAMSETTING.AGGRESSIVE)
 	model.optimize()
+	
 	status = model.getStatus()
 	if status == 'optimal':
 		print ("%s 1" %(model.getObjVal()))
 	else:
 		print ("%s 0" %(model.getObjVal()))
-	cost = 0
 	'''
+	cost = 0
 	if status == 'optimal':
 		for v in model.getVars():
 			if v.name != "n":
@@ -96,13 +101,23 @@ def optimize():
 	res = [0 for x in range(m)]
 	for i in range(n):
 		for j in range(m):
-			if model.getVal(x[i][j]) > 0:
-				res[int(str(x[i][j]).split(',')[1])] = i
+			if model.getVal(x[i][j]) > EPS:
+				res[int(str(x[i][j]).split(',')[1])] = int(str(x[i][j]).split(',')[0])
+				#if(i==186):
+				#	print ("%s %d %s %d %d" %(model.getVal(x[i][j]), round(model.getVal(x[i][j])), str(x[i][j]), int(str(x[i][j]).split(',')[0]), int(str(x[i][j]).split(',')[1])))
 	
 	for j in range(m):
 		print(res[j], end =" ")
-	
-	print("\n")			
+	'''
+	#model.printStatistics()
+	seta = [229, 266,440,501,504,539,563,588,738,744]
+	sum = 0
+	for i in seta:
+		sum = sum + customer[i].demand
+	print (sum)
+	print (facility[186].capacity)
+	print (facility[185].capacity)
+	'''
 def main():
 	process_input()
 	calculate_distance()
