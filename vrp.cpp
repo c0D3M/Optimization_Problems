@@ -33,7 +33,7 @@ typedef struct Cluster
 	vector<int> customer;
 }Cluster;
 int n;// # of customer
-int v;// # of vehicle
+int v, v_orignal;// # of vehicle
 int q;// capacity of each vehicle
 float **adjMatrix; // distance matrix
 float **custToSeed;
@@ -95,14 +95,17 @@ int main(int argc, char* argv[])
 		total_demand += t.demand;
 		c.push_back(t);
 	}
-	v = ceil(total_demand/q);
+	v_orignal = v;
+	perV = ((total_demand / total_capacity )*q);
+	v = ceil(total_demand/q); // If we have to use just enough vehicle to service all customer
 	for (int i=0; i<v; i++)
 	{
 		cluster[i].capacity = q;
+		//cluster[i].capacity = perV;//Use all
 		cluster[i].customer.reserve(v);
 	}
-	perV = (total_demand / total_capacity )*q;
-	LOG("Total Demand= "<< total_demand<<" Total Capacity "<< total_capacity<<" per Vehicle= "<<perV);
+	
+	LOG("Total Demand= "<< total_demand<<" Total Capacity "<< total_capacity<<" per Vehicle= "<<perV<<" Minimum Vehicle="<<v);
 	// Adjacency matrix between customers & depot.
 	adjMatrix = new float* [n];
 	for (int i=0; i<n; i++)
@@ -127,7 +130,7 @@ int main(int argc, char* argv[])
 	}
 	LOG("ID   Demand x y angle coneAngle"); 
 	for (int i=1; i<n; i++)
-		LOG("i= "<<c[i].id<<c[i].demand<<" x="<<c[i].x<<" y="<<c[i].y<<" "<<c[i].angle* 180 / PI<<" "<<c[i].coneAngle* 180 / PI);
+		LOG("i= "<<c[i].id<<" "<<c[i].demand<<" x="<<c[i].x<<" y="<<c[i].y<<" "<<c[i].angle* 180 / PI<<" "<<c[i].coneAngle* 180 / PI);
 	
 	// ith customer cone is defined as  coneAngle of prev(i) & i
 	// Calculate seed points
@@ -225,11 +228,13 @@ void calculateSeedDistance()
 void assignCustomerToVehicle()
 {
 	sort(c.begin()+1, c.end(), sortbyDemand);
+	vector<int> left;
 	for (int i =1; i<n ; i++)
 	{
 		float minFound = numeric_limits<float>::infinity();
 		int assign=-1;
-		for (int j=0; j<v; j++)
+		int j;
+		for (j=0; j<v; j++)
 		{
 			//if vehicle capacity is larger than customer i demand 
 			if(cluster[j].capacity < c[i].demand)
@@ -242,7 +247,10 @@ void assignCustomerToVehicle()
 			}
 		}
 		if(assign==-1)
-			LOG("No cluster can be assigned");
+		{
+			LOG("No cluster can be assigned "<<c[i].id << " "<<c[i].demand<<" " <<c[c[i].id].x<<" "<< c[c[i].id].y)///;
+			left.push_back(c[i].id);
+		}
 		else
 		{
 			
@@ -252,25 +260,67 @@ void assignCustomerToVehicle()
 			LOG("customer "<< c[i].id<<" cluster "<<assign<< " capacity left "<<cluster[assign].capacity);
 		}
 	}
+	sort(c.begin()+1, c.end(), sortbyID);
+	if(left.size() && (q-perV))
+	{
+		//in crease capacity
+		for (int j=0; j<v; j++)
+			cluster[j].capacity+=(q-perV);
+		for (auto &i:left)
+		{
+			float minFound = numeric_limits<float>::infinity();
+			int assign=-1;
+			int j;
+			for (j=0; j<v; j++)
+			{
+				//if vehicle capacity is larger than customer i demand 
+				if(cluster[j].capacity < c[i].demand)
+					continue;
+				float cost = min(adjMatrix[0][i]+custToSeed[i][j]+seedToCust[j][0], custToSeed[0][j]+seedToCust[j][i]+adjMatrix[i][0]) - (custToSeed[0][j] + seedToCust[j][0]);
+				if(cost < minFound)
+				{
+					minFound = cost;
+					assign = j; // customer assign to jth vehicle
+				}
+			}
+			if(assign==-1)
+			{
+				cout<<"No cluster can be assigned "<<i << " "<<c[i].demand<<" " <<c[i].x<<" "<< c[i].y<<endl;
+			}
+			else
+			{
+				
+				cluster[assign].customer.push_back(i);
+				// Decrease capacity of this vehicle;
+				cluster[assign].capacity -= c[i].demand;
+				LOG("customer "<< i<<" cluster "<<assign<< " capacity left "<<cluster[assign].capacity);
+			}
+		}
+	}
+	
 	// Solve TSP for each cluster
 	float total_cost=0;
 	ofstream fout2;
 	fout2.open("final.txt");
 	for (int i =0; i<v;i++)
 	{
+		LOG("start of cluster "<<i<<endl);
 		ofstream fout;
 		fout.open("in.txt"); 
 		fout << cluster[i].customer.size()+1<<endl;
 		fout << c[0].x<<" "<<c[0].y<<endl;
 		vector<int> mapping; // tsp id to vrp id mapping
 		mapping.push_back(0);
+		int total_load=0;
 		for (auto &j: cluster[i].customer)
 		{
-			//cout <<j<<" ";
+			LOG_S(j<<" ");
 			mapping.push_back(j);
 			fout <<c[j].x<<" " << c[j].y<<endl;
+			total_load += c[j].demand;
 		}
-		//cout <<endl;
+		LOG_S(" demand: "<<total_load);
+		LOG_S(endl);
 		system("./tsp in.txt > out.txt");
 		
 		// sum up the cluster tour cost
@@ -279,7 +329,7 @@ void assignCustomerToVehicle()
 		float cost, opt;
 		fin >> cost >> opt;
 		total_cost += cost;
-		//cout << cost <<endl;
+		LOG("TSP cost is "<<cost);
 		int t, rotate_index; //used to rotate around depot since all tour should start from depot
 		vector<int> result;
 		for (int j=0; j<cluster[i].customer.size()+1; j++)
@@ -288,10 +338,10 @@ void assignCustomerToVehicle()
 			if(t==0)
 				rotate_index = j;
 			result.push_back(mapping[t]);
-			//cout << t<<"->"<< mapping[t]<<" ";
+			LOG_S(t<<"->"<< mapping[t]<<" ");
 		}
-		//cout <<endl;
-		//cout <<"done "<<result.size()<<" "<<rotate_index<<endl;
+		LOG_S(endl);
+		LOG("done "<<result.size()<<" "<<rotate_index);
 		rotate(result.begin(), result.begin()+rotate_index, result.end() );
 		result.push_back(0);
 		
@@ -304,5 +354,7 @@ void assignCustomerToVehicle()
 	}
 	cout << total_cost<<" 0"<<endl;
 	system("cat final.txt");
+	for (int i = v; i<v_orignal; i++)
+		cout <<"0 0"<<endl;
 	
 }		
