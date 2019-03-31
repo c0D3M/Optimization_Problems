@@ -30,7 +30,9 @@ typedef struct VehicleCone
 typedef struct Cluster
 {
 	int capacity;
-	vector<int> customer;
+	float cost ;// tour cost
+	vector<int> customer; //list of customer id
+	vector<int> tspTourOrder;
 }Cluster;
 int n;// # of customer
 int v, v_orignal;// # of vehicle
@@ -48,6 +50,10 @@ vector<C> c;
 bool sortbyAngle(C a, C b)
 {
 	return a.angle < b.angle;
+}
+bool sortbyAngleWithID(C a, C b)
+{
+	return c[a.id].angle < c[b.id].angle;
 }
 bool sortbyDemand(C a, C b)
 {
@@ -96,12 +102,21 @@ int main(int argc, char* argv[])
 		c.push_back(t);
 	}
 	v_orignal = v;
-	perV = ((total_demand / total_capacity )*q);
-	v = ceil(total_demand/q); // If we have to use just enough vehicle to service all customer
+	#ifdef USE_MIN
+		perV = ceil((total_demand / total_capacity )*q);
+		v = ceil(total_demand/q); // If we have to use just enough vehicle to service all customer
+	#else
+		perV = ((total_demand / total_capacity )*q);
+	#endif
+	
 	for (int i=0; i<v; i++)
 	{
-		cluster[i].capacity = q;
-		//cluster[i].capacity = perV;//Use all
+		#ifdef USE_MIN
+			cluster[i].capacity = perV;//Use all
+		#else
+			cluster[i].capacity = q;
+		#endif
+		
 		cluster[i].customer.reserve(v);
 	}
 	
@@ -122,8 +137,9 @@ int main(int argc, char* argv[])
 	
 	for (int i=1; i<n; i++)
 	{
-		
-		if((c[next(i)].angle-c[i].angle)<0)
+		/*if((c[next(i)].angle-c[i].angle)==0)
+			c[i].coneAngle = c[i].angle + (0.5);
+		else */if((c[next(i)].angle-c[i].angle)<0)
 			c[i].coneAngle = c[i].angle + ((2*PI) - c[i].angle)/2;
 		else
 			c[i].coneAngle = c[i].angle + (c[next(i)].angle-c[i].angle)/2;
@@ -141,7 +157,11 @@ int main(int argc, char* argv[])
 	for (int i=0; i < v; i++)
 	{
 		int sum =0, j;
-		for (j =index; c[j].left && (sum+c[j].left)<= perV; j = next(j))
+		if(c[j].left)
+			j = index;
+		else
+			j = next(j);
+		for (; c[j].left && (sum+c[j].left)<= perV; j = next(j))
 		{
 			sum += c[j].left;
 			c[j].left =0;
@@ -158,7 +178,10 @@ int main(int argc, char* argv[])
 		
 		if((j !=1 ) && (end > c[j].coneAngle))
 			vc[i].customer.push_back(j);
-		LOG("cone angle start ="<<start*180/PI<<" end = " << end*180/PI<<" size= " << (end-start)*180/PI);
+		LOG_S("[vehicle] cone angle start ="<<start*180/PI<<" end = " << end*180/PI<<" size= " << (end-start)*180/PI);
+		for (auto &k:vc[i].customer)
+			LOG_S(" "<< k);
+		LOG_S(endl);
 		#if 1
 		if((end-start)<0) //cross over
 			seedAngle.push_back((start + (2*PI + (end-start))/2)-2*PI);
@@ -209,6 +232,72 @@ int main(int argc, char* argv[])
 	assignCustomerToVehicle();
 	
 }
+typedef struct 
+{
+	float cost;
+	vector<int> city;
+}TSP;
+// Solve TSP for a given list of city 
+TSP solveTSP(vector<int> customer)
+{
+		TSP t;
+		ofstream fout;
+		fout.open("in.txt"); 
+		fout << customer.size()+1<<endl;
+		fout << c[0].x<<" "<<c[0].y<<endl;
+				
+		for (auto &j: customer)
+			fout <<c[j].x<<" " << c[j].y<<endl;
+		
+		system("./tsp in.txt > out.txt"); // execute TSP solver
+		
+		ifstream fin;
+		fin.open("out.txt");
+		int opt;
+		fin >> t.cost >> opt;
+		int temp;
+		for (int i =0 ; i< customer.size()+1; i++)
+		{
+			fin >> temp;
+			t.city.push_back(temp);
+		}
+		return t;;
+}
+// Solve TSP for a given cluster and store the result in cluster structure starting with 0(depot)
+void evalCluster(int i) // cluster id
+{
+
+		
+		vector<int> mapping; // help in converting tsp id to vrp id mapping
+		mapping.push_back(0);
+		int total_load=0;
+		for (auto &j: cluster[i].customer)
+		{
+			LOG_S(j<<" ");
+			mapping.push_back(j);
+			total_load += c[j].demand;
+		}
+		LOG_S(" demand: "<<total_load);
+		LOG_S(endl);
+			
+		TSP tsp = solveTSP(cluster[i].customer);
+		cluster[i].cost = tsp.cost;	
+		LOG("TSP cost is "<<tsp.cost);
+		int rotate_index; //used to rotate around depot since all tour should start from depot
+		// Map tsp id to real customer id
+		for (int j=0; j<cluster[i].customer.size()+1; j++)
+		{
+			if(tsp.city[j]==0)
+				rotate_index = j;
+			cluster[i].tspTourOrder.push_back(mapping[tsp.city[j]]);
+			LOG_S(tsp.city[j]<<"->"<< mapping[tsp.city[j]]<<" ");
+		}
+		LOG_S(endl);
+		LOG("done "<<cluster[i].tspTourOrder.size()<<" "<<rotate_index);
+		// tour should always start with 0 i.e. depot and also end with 0 (explicit)
+		rotate(cluster[i].tspTourOrder.begin(), cluster[i].tspTourOrder.begin()+rotate_index, cluster[i].tspTourOrder.end() );
+		cluster[i].tspTourOrder.push_back(0);
+}
 //calculate adjMatrix for seedpoint;
 void calculateSeedDistance()
 {
@@ -248,7 +337,7 @@ void assignCustomerToVehicle()
 		}
 		if(assign==-1)
 		{
-			LOG("No cluster can be assigned "<<c[i].id << " "<<c[i].demand<<" " <<c[c[i].id].x<<" "<< c[c[i].id].y)///;
+			LOG("No cluster can be assigned "<<c[i].id << " "<<c[i].demand<<" " <<c[c[i].id].x<<" "<< c[c[i].id].y);///;
 			left.push_back(c[i].id);
 		}
 		else
@@ -285,7 +374,7 @@ void assignCustomerToVehicle()
 			}
 			if(assign==-1)
 			{
-				cout<<"No cluster can be assigned "<<i << " "<<c[i].demand<<" " <<c[i].x<<" "<< c[i].y<<endl;
+				LOG("No cluster can be assigned "<<i << " "<<c[i].demand<<" " <<c[i].x<<" "<< c[i].y);
 			}
 			else
 			{
@@ -300,60 +389,40 @@ void assignCustomerToVehicle()
 	
 	// Solve TSP for each cluster
 	float total_cost=0;
-	ofstream fout2;
-	fout2.open("final.txt");
 	for (int i =0; i<v;i++)
 	{
 		LOG("start of cluster "<<i<<endl);
-		ofstream fout;
-		fout.open("in.txt"); 
-		fout << cluster[i].customer.size()+1<<endl;
-		fout << c[0].x<<" "<<c[0].y<<endl;
-		vector<int> mapping; // tsp id to vrp id mapping
-		mapping.push_back(0);
-		int total_load=0;
-		for (auto &j: cluster[i].customer)
-		{
-			LOG_S(j<<" ");
-			mapping.push_back(j);
-			fout <<c[j].x<<" " << c[j].y<<endl;
-			total_load += c[j].demand;
-		}
-		LOG_S(" demand: "<<total_load);
-		LOG_S(endl);
-		system("./tsp in.txt > out.txt");
-		
-		// sum up the cluster tour cost
-		ifstream fin;
-		fin.open("out.txt");
-		float cost, opt;
-		fin >> cost >> opt;
-		total_cost += cost;
-		LOG("TSP cost is "<<cost);
-		int t, rotate_index; //used to rotate around depot since all tour should start from depot
-		vector<int> result;
-		for (int j=0; j<cluster[i].customer.size()+1; j++)
-		{
-			fin >> t;
-			if(t==0)
-				rotate_index = j;
-			result.push_back(mapping[t]);
-			LOG_S(t<<"->"<< mapping[t]<<" ");
-		}
-		LOG_S(endl);
-		LOG("done "<<result.size()<<" "<<rotate_index);
-		rotate(result.begin(), result.begin()+rotate_index, result.end() );
-		result.push_back(0);
-		
-		
-		for (auto &i:result)
-			fout2<<i<<" ";
-		fout2<< endl;
-		// Map tsp id to real customer id
-		// tour should always start with 0 i.e. depot and also end with 0 (explicit)
+		evalCluster(i);
+		total_cost += cluster[i].cost;// sum up the cluster tour cost
 	}
+	#if 0
+	LOG("start local search");
+	// Start local search exchange customer and see if that can result in shorter cost overall.
+	for (int i=0; i<v ; i++)
+	{
+		// sort the cluster by its angle
+		sort(cluster[i].customer.begin(), cluster[i].customer.end(), sortbyAngleWithID);
+		int n = next(i);
+		sort(cluster[n].customer.begin(), cluster[n].customer.end(), sortbyAngleWithID);
+		//Try swap current cluster last with next cluster first on basis of demand/capacity fulfillment
+		int current = cluster[i].left + cluster[i].customer[cluster[i].customer.size()-1];
+		int next = cluster[n].left + cluster[n].customer[0];
+		if((cluster[n].customer[0] < current) && (cluster[i].customer[cluster[i].customer.size()-1] < next))
+		{
+			//swapping possible
+			LOG("swapping possible on "<< i <<" "<< n <<" cluster");
+		}
+		
+		
+	}
+	#endif
 	cout << total_cost<<" 0"<<endl;
-	system("cat final.txt");
+	for (int i = 0; i<v; i++)
+	{
+		for(auto &j:cluster[i].tspTourOrder)
+			cout <<j<<" ";
+		cout <<endl;
+	}
 	for (int i = v; i<v_orignal; i++)
 		cout <<"0 0"<<endl;
 	
