@@ -66,6 +66,16 @@ void reverseTour(int start, int end)
 	for (int i=0; i<count; i++)
 		std::swap(Tour[next(start, i)], Tour[prev(end, i)]);
 }
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+    almost_equal(T x, T y, int ulp)
+{
+    // the machine epsilon has to be scaled to the magnitude of the values used
+    // and multiplied by the desired precision in ULPs (units in the last place)
+    return std::abs(x-y) <= std::numeric_limits<T>::epsilon() * std::abs(x+y) * ulp
+        // unless the result is subnormal
+        || std::abs(x-y) < std::numeric_limits<T>::min();
+}
 // a, b, c, d  are indices in Tour array
 float getDistance (int a, int b)
 {
@@ -85,9 +95,12 @@ float getDelta(int a, int b, int c, int d)
 	if((bd==ab) && (ac==cd)) // Sometime it is observed that ab & ac , bd & cd are both same, so no need
 		return 1;
 	DeltaC = (ac + bd - ab - cd);
-	if(fabs(DeltaC)<=numeric_limits<double>::epsilon())
+	//if(fabs(DeltaC)<=numeric_limits<double>::epsilon())
+	//if(almost_equal(DeltaC, (float)0.0, 2))
+	if(fabs(DeltaC)<1e-3)
 		return 1;
 	DeltaP = (alpha *(penalty[Tour[a]][Tour[c]]+penalty[Tour[b]][Tour[d]]-penalty[Tour[a]][Tour[b]]-penalty[Tour[c]][Tour[d]]));
+	LOG("Delta C ="<<DeltaC<<" DeltaP "<< DeltaP<<" "<<almost_equal(DeltaC, (float)0.0, 6));
 	return DeltaC+DeltaP ;
 }
 void SaveBestTour()
@@ -443,7 +456,8 @@ int main(int argc, char* argv[])
 	while(max_no_improvement < MAX_NO_IMPROVEMENT)
 	{
 		float oldCost =bestCost;
-		//cout<<"best cost is"<< bestCost<<" "<<max_no_improvement<<endl;
+		//cout<< "best cost is"<< bestCost<<" "<<max_no_improvement<<endl;
+		LOG("best cost is"<< bestCost<<" "<<max_no_improvement);
 		FastLocalSearch();
 		if((oldCost-bestCost) > 1)
 		    max_no_improvement=0;
