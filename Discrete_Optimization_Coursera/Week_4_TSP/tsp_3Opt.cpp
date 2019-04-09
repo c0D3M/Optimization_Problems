@@ -213,6 +213,19 @@ bool getDelta3Opt(int a, int b, int c, int d, int e, int f)
 		index = 2;
 	if((delta[3] <0) && (delta[3]<delta[0]) && 	(delta[3]<delta[1]) && (delta[3]<delta[2]))
 		index = 3;
+	/*
+	While doing 3-opt moves we have swap the routes, for example
+	0  1  2  3  4  5  6  -> Tour array
+	0->1->2->3->4->5->6
+	If we have  to rotate [2,4] we can do that with ease but if we have to rotate something like
+	[5,1] , we cant do that using C++ rotate API, as the left index > right index.
+	To do that we first left shift , rotate and then do right shift [ normalize flag tell if we have to
+	do this or not]
+	So in above example it will become
+	[5,1]  become [3,6] after left shift [move it to origin i.e. index 0]
+	Do rotate and thenright shift to again make [5,1]
+	
+	*/
 	bool normalize=false;
 	int shifter;
 	switch (index)
