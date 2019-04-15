@@ -5,14 +5,18 @@ https://www.ibm.com/developerworks/community/blogs/jfp/entry/no_the_tsp_isn_t_np
 http://graham-kendall.com/blog/2013/12/what-is-operations-research/  
 
 TSP is NP: need to verify in polynomial time that given solution is optimal? which isnt possible in polynomial time.  
-TSP is NP-Hard: All other problem in NP class can be reduced to it in polynomial time.  
+TSP is NP-Hard: All other problem in NP class can be reduced to it in polynomial time.  TODO put a link to this.
 TSP is NP_Complete?: Is the given tour shorter than L 
 
-#### Tour Construction Algorithm  
-##### Branch & Bound  
-##### Nearest Neighbour  
-##### Double Tree  
-##### Christofide Algorithm  
+Lower Bound:    
+Upper Bound:  
+
+## Tour Construction Algorithm  
+----------------------------------
+### Branch & Bound  
+### Nearest Neighbour  
+### Double Tree  
+### Christofide Algorithm  
 ###### Minimum Weight Perfect Matching  
   **Aho-Hopcraft**  
   **Edmond's Blossom Algorithm**  
@@ -31,15 +35,24 @@ TSP is NP_Complete?: Is the given tour shorter than L
   **Belief Propogation**  
   **Hungarian Method**  
      Row-minima /column minima approach.  
-##### TSP using Integer Programming  
+## Tour Improvement Methods  
+### Heurestics:  
+#### 2 -Opt , 3-Opt & k-Opt.  
+
+### Meta-Heurestics:  
+Problem independent methods which are used to escape local minimima/maxima and reach for global optimum.  
+Some example of tehse are Tabu Search, Simulated Annealing, Genetic Algorithms.  
+
+#### Simulated Annealing  
+#### Guided Local Search and Fast Local Search  
+     http://csp.bracil.net/gls.html   
+#### Ant Colony Optimization  
+     https://www.youtube.com/watch?v=wfD5xlEcmuQ  
+    ![ACO Paper!](https://ac.els-cdn.com/S1002007108002736/1-s2.0-S1002007108002736-main.pdf)  
+### TSP using Integer Programming  
     http://opensourc.es/blog/mip-tsp  
    *Gomory Cut*  
-       http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
-##### TSP using Guided Local Search/ Fast Local Search
-    http://csp.bracil.net/gls.html   
-#### Tour Improvement methods  
-##### Lin Kernighan  
-##### Lin Kernighan Helsgaun  
+    http://www.math.uwaterloo.ca/tsp/methods/dfj/index.html  
 
 **References**
 1. Summary of various way to solve TSP. https://www2.seas.gwu.edu/~simhaweb/champalg/tsp/tsp.html  
