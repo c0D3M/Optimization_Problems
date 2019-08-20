@@ -1,7 +1,10 @@
 # python3
 import itertools
 import os
-
+''' Graph Coloring Problem using 3-color
+    Input: Undirected Graph
+    Output: Assignment of 3-color to various nodes
+'''
 clauses = []
 def exactly_one_of(literals):
 	# Adds one of literals to be true
