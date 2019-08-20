@@ -8,6 +8,8 @@ using std::vector;
  * Travelling Salesman problem using Held-Karp Dynamic Programming Algorithm.
  * Time Complexity: O(n^2 * 2^n)
  * Space : O(n * 2^n)
+   This is an 'Exact Algoruthim' for smaller instances.
+   Returns Optimal Solution, for all cases but time complexity is polynomial.
  */
 
 
