@@ -2,7 +2,11 @@
 #include <vector>
 #include <sys/resource.h>
 #include <algorithm>
-
+/*
+Independent Set problem with weighted Nodes
+Output: Max Size Independent Set node.
+Special Case Algorithm: Works for all cases, in optimal time but only for special case.
+*/
 struct Vertex {
     int weight;
     long long  best;
