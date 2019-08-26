@@ -56,6 +56,9 @@ for i in range (1, n+1):
 
 #5. Non-adjacent vertex cant be adjacent in hamiltonian path.
 # Remove adjacent node
+# NOT_ALLOWED[ (Node i at pos j) AND NOT (All neighbour of i at pos j+1)], which translates to
+# NOT(Node i at pos j) OR  (All neighbour of i at pos j+1)
+# Key Idea is NOT(X AND Y) which translate to NOT(X) OR NOT(Y) , which is in CNF Form 
 for i in range (1, n+1): #node
 	for j in range(1, n):#position
 		l = []
