@@ -32,6 +32,8 @@ for i in range(len(edges)):
 		x, y = edges[i]
 		x = x-1 # convert to 0 index
 		y = y-1
+		# NOT [ (Vertex U, color j) AND (Neighbor vertex of same color j)
+		# Translate to NOT(U, j) OR NOT(V, j)
 		#vertex (u, v) cannot have same color
 		clauses.append([-varnum(x, j), -varnum(y, j)])
 		
